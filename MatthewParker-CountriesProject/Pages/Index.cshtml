@@ -1,0 +1,370 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+@{
+    //List Variables to hold Country, Region and SubRegion Data
+    List<DotNetRestCountries.Country> countries = DotNetRestCountries.RestCountry.All();
+    List<MatthewParker_CountriesProject.Region> regions = new List<Region>();
+    List<MatthewParker_CountriesProject.SubRegion> subRegions = new List<SubRegion>();
+
+    //Method to add new Region into Region List
+    void addRegion(string regionName, int countryPopulation, string countryName, string subRegionName)
+    {
+        Region rem = new Region(regionName);
+        rem.addCountry(countryPopulation, countryName);
+        rem.addSubRegion(subRegionName);
+        regions.Add(rem);
+    }
+
+    //Method to add new SubRegion into SubRegion List
+    void addSubRegion(string subRegionName, string regionName, int countryPopulation, string countryName)
+    {
+        SubRegion subRegion = new SubRegion(subRegionName, regionName);
+        subRegion.addCountry(countryPopulation, countryName);
+        subRegions.Add(subRegion);
+    }
+}
+
+@{
+    //Loop through Each Country Item to add their Information to Region and SubRegion Items
+    foreach (DotNetRestCountries.Country country in countries)
+    {
+        //If Region is empty, automatically add new Region and SubEegion Items to Lists
+        if (regions.Count < 1)
+        {
+            addRegion(country.Region, country.Population, country.Name, country.Subregion);
+            addSubRegion(country.Subregion, country.Region, country.Population, country.Name);
+        }
+        else
+        {
+            bool found = false;
+
+            //Loop through each Region Item in Region List
+            foreach (Region tempReg in regions)
+            {
+                //If current Iteration has the same region value as the country
+                if (tempReg.Name == country.Region)
+                {
+                    //Add Country Infomation to Region Iteration
+                    tempReg.addCountry(country.Population, country.Name);
+
+                    //If Region Item doesn't have the Sub Region, then add it
+                    if (!tempReg.SubRegions.Contains(country.Subregion))
+                    {
+                        tempReg.addSubRegion(country.Subregion);
+
+                        //Add the New SubRegion to SubRegion List
+                        addSubRegion(country.Subregion, country.Region, country.Population, country.Name);
+                    }
+                    else
+                    {
+                        //Loop through SubRegion List
+                        foreach (SubRegion tempSub in subRegions)
+                        {
+                            //If Current Iteration matches with Country SubRegion, update SubRegion Item with Country Information
+                            if (tempSub.Name == country.Subregion)
+                            {
+                                tempSub.addCountry(country.Population, country.Name);
+                            }
+                        }
+                    }
+                    found = true;
+                }
+            }
+
+            //If Not found in Region list, add new Region and SubRegion Items with Country Information
+            if (!found)
+            {
+                addRegion(country.Region, country.Population, country.Name, country.Subregion);
+                addSubRegion(country.Subregion, country.Region, country.Population, country.Name);
+            }
+        }
+    }
+}
+
+<script type='text/javascript'>
+    function showTable(elmt) {
+        //Loop Through all the 'Modal' HTML Elements and make them invisible
+        for (var i = 0; i < modal.length; i++) {
+            modal[i].style.display = "none";
+        }
+
+        //Get Specific 'Modal' HTML Element
+        var modalName = "myModal";
+        var modalId = modalName.concat("-", elmt);
+        var modalElement = document.getElementById(modalId);
+
+        //Make 'Modal' HTML Element Visible
+        modalElement.style.display = "block";
+    }
+</script>
+
+<div class="text-center">
+    <h1 class="display-5">Welcome to Matthew Parker's Countries Website</h1>
+    <p>Click on a Country, Region or SubRegion to open a new table for selected item</p>
+
+    <!-- The SubRegions Modals -->
+    <!-- Click on a Country or Region Table Row will open a new table -->
+    @foreach (MatthewParker_CountriesProject.SubRegion subRegion in subRegions)
+    {
+        <div id="myModal-@subRegion.Name" class="modal">
+            <div class="modal-content" id="modal-content-@subRegion.Name">
+                <div class="modal-header">
+                    <h4 class="modal-title">@subRegion.Name</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <p>Click on a Country, Region or SubRegion Table Row to open a new table for selected item</p>
+                <table class="table-striped table-hover-darkgreen">
+                    <tbody>
+                        <tr>
+                            <th>Sub Region Name</th>
+                            <td>@subRegion.Name</td>
+                        </tr>
+                        <tr>
+                            <th>Population</th>
+                            <td>@subRegion.Population</td>
+                        </tr>
+                        <tr onclick="showTable('@subRegion.Region');">
+                            <th>Region Name</th>
+                            <td>@subRegion.Region</td>
+                        </tr>
+
+                        @{
+                            //Loop through each Country in SubRegions
+                            int num = 1;
+                            foreach (String cName in subRegion.Countries)
+                            {
+                                //Click on Country Table Row to load Country Data
+                                <tr onclick="showTable('@cName');">
+                                    <th>Country @num</th>
+                                    <td>@cName</td>
+                                </tr>
+                                num += 1;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- The Regions Modals -->
+    <!-- Click on a Country and SubRegion Table Row will open a new table -->
+    @foreach (MatthewParker_CountriesProject.Region region in regions)
+    {
+        <div id="myModal-@region.Name" class="modal">
+            <div class="modal-content" id="modal-content-@region.Name">
+                <div class="modal-header">
+                    <h4 class="modal-title">@region.Name</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <p>Click on a Country, Region or SubRegion to open a new table for selected item</p>
+                <table class="table-striped table-hover-darkgreen">
+                    <tbody>
+                        <tr>
+                            <th>Region Name</th>
+                            <td>@region.Name</td>
+                        </tr>
+                        <tr>
+                            <th>Population</th>
+                            <td>@region.Population</td>
+                        </tr>
+
+                        @{
+                            //Loop through each SubRegion in Region
+                            int num = 1;
+                            foreach (String subName in region.SubRegions)
+                            {
+                                <tr onclick="showTable('@subName');">
+                                    <th>SubRegion @num</th>
+                                    <td>@subName</td>
+                                </tr>
+                                num += 1;
+                            }
+
+                            //Loop through each Country in Region
+                            num = 1;
+                            foreach (String cName in region.Countries)
+                            {
+                                //Click on Country Table Row to load Country Data
+                                <tr onclick="showTable('@cName');">
+                                    <th>Country @num</th>
+                                    <td>@cName</td>
+                                </tr>
+                                num += 1;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- The Country Modals -->
+    <!-- Click on a Region and SubRegion Table Row will open a new table -->
+    @foreach (DotNetRestCountries.Country country in countries)
+    {
+        <div id="myModal-@country.Name" class="modal">
+            <div class="modal-content" id="modal-content-@country.Name">
+                <div class="modal-header">
+                    <h4 class="modal-title">@country.Name</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <p>Click on a Country, Region or SubRegion to open a new table for selected item</p>
+                <table class="table-striped table-hover-darkgreen">
+                    <tbody>
+                        <tr>
+                            <th>Country Name</th>
+                            <td>@country.Name</td>
+                        </tr>
+                        <tr>
+                            <th>Capital City</th>
+                            <td>@country.Capital</td>
+                        </tr>
+                        <tr>
+                            <th>Population</th>
+                            <td>@country.Population</td>
+                        </tr>
+                        <tr onclick="showTable('@country.Region');">
+                            <th>Region Name</th>
+                            <td>@country.Region</td>
+                        </tr>
+                        <tr onclick="showTable('@country.Subregion');">
+                            <th>Subregion Name</th>
+                            <td>@country.Subregion</td>
+                        </tr>
+                        @{
+                            //Loop through each currency in Country Item
+                            String currency = "";
+                            foreach (DotNetRestCountries.Currency cur in country.Currencies)
+                            {
+                                currency += cur.Name;
+
+                                //Add Comma if there are additional currencies to add
+                                if (cur != country.Currencies[country.Currencies.Length - 1])
+                                {
+                                    currency += ", ";
+                                }
+                            }
+                        }
+                        <tr>
+                            <th>Currencies</th>
+                            <td>@currency</td>
+                        </tr>
+                        @{
+                            //Loop through each language in Country Item
+                            String lang = "";
+                            for (int i = 0; i < country.Languages.Count(); i++)
+                            {
+                                lang += country.Languages[i].Name;
+
+                                //Add Comma if there are additional languages to add
+                                if (country.Languages.Length - i != 1)
+                                {
+                                    lang += ", ";
+                                }
+                            }
+                        }
+                        <tr>
+                            <th>Langauges</th>
+                            <td>@lang</td>
+                        </tr>
+                        @{
+                            //Loop through each border/neighbour in Country Item
+                            int num = 1;
+                            foreach (string neigbour in country.Borders)
+                            {
+                                string neighCountry = "";
+
+                                //Loop through countries for Alpha 3 Code to get full name for border/neighbour
+                                foreach (DotNetRestCountries.Country cur in countries)
+                                {
+                                    if (cur.Alpha3Code == neigbour)
+                                    {
+                                        neighCountry = cur.Name;
+                                    }
+                                }
+
+                                //Click on Country Table Row to load Country Data
+                                <tr onclick="showTable('@neighCountry');">
+                                    <th>Neighbour Country @num</th>
+                                    <td>@neighCountry</td>
+                                </tr>
+                                num += 1;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!--Main Table displaying Countries, Regions, SubRegions-->
+    <!--Use Search Bar to Filter Table Data-->
+    <!--Click on Country, Region, SubRegion Table Cell will open a New Table-->
+    <div id="main-table">
+        <input class="form-control" id="myInput" type="text" placeholder="Search..">
+        <br />
+        <table class="table-bordered table-hover-green centerTable">
+            <thead>
+                <tr>
+                    <th class="text-center">Country Name</th>
+                    <th class="text-center">Country Region</th>
+                    <th class="text-center">Country Subregion</th>
+                </tr>
+            </thead>
+            <tbody id="myTable">
+                @foreach (DotNetRestCountries.Country country in countries)
+                {
+                    <tr>
+                        <td onclick="showTable('@country.Name');"><img src="@country.Flag"> @country.Name</td>
+                        <td onclick="showTable('@country.Region');">@country.Region</td>
+                        <td onclick="showTable('@country.Subregion');">@country.Subregion</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    //Filter Main Table based on values in Search Bar
+    $(document).ready(function () {
+        $("#myInput").on("keyup", function () {
+            var value = $(this).val().toLowerCase();
+            $("#myTable tr").filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+
+    //Get the 'modal' HTML Elements and make them invisible
+    var modal = document.getElementsByClassName("modal");
+    for (var i = 0; i < modal.length; i++) {
+        modal[i].style.display = "none";
+    }
+
+    //Get the <span> element that closes the modal(s)
+    var span = document.getElementsByClassName("close");
+
+    //When the user clicks on <span> (x), close the modal(s)
+    for (var i = 0; i < span.length; i++) {
+        span[i].onclick = function () {
+            for (var i = 0; i < modal.length; i++) {
+                modal[i].style.display = "none";
+            }
+        }
+    }
+
+    //When the user clicks anywhere outside of the modal(s), close it
+    window.onclick = function (event) {
+        for (var i = 0; i < modal.length; i++) {
+            if (event.target == modal[i]) {
+                modal[i].style.display = "none";
+            }
+        }
+    }
+</script>
+
